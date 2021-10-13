@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\User\AddRequest;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -22,7 +21,8 @@ class UserController extends Controller
         if (Auth::check()) {
            $user = Auth::user();
            if ($user->role == 1) {
-                $users = User::paginate(20);
+                $users = User::getUser();
+
                 return view('admin.users.list',[
                     'title' => 'Danh sách người dùng',
                     'users' => $users
@@ -61,12 +61,7 @@ class UserController extends Controller
     public function store(AddRequest $request)
     {
         try {
-            User::create([
-                'name' => (string) $request->input('name'),
-                'email' => (string) $request->input('email'),
-                'password' => (string) Hash::make($request->input('password')),
-                'role' => (int) $request->input('role'),
-            ]);
+            User::addUser($request);
             Session::flash('success', 'created successfully');
         } catch (\Exception $err) {
             Session::flash('error', $err->getMessage());
@@ -82,6 +77,7 @@ class UserController extends Controller
     public function show()
     {
         $user = Auth::user();
+        
         return view('admin.users.change',[
             'title' => 'Thông tin người dùng',
             'user' => $user

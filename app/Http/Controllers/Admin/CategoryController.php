@@ -18,7 +18,8 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = categories::all();
+        $categories = categories::getCategories();
+        
         return view('admin.categories.list',[
             'title' => 'Danh sách thể loại',
             'categories' => $categories
@@ -53,10 +54,7 @@ class CategoryController extends Controller
     public function store(AddRequest $request)
     {
         try {
-            categories::create([
-                'name' => (string) $request->input('name'),
-                'quantity' => (int) $request->input('quantity'),
-            ]);
+            categories::addCategory($request);
             Session::flash('success', 'created successfully');
         } catch (\Exception $err) {
             Session::flash('error', $err->getMessage());

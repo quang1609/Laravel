@@ -21,11 +21,11 @@ class ItemController extends Controller
      */
     public function index(Request $request)
     {
-        $itemQuery = items::where('name', 'like', "%" . $request->keyword . "%");
-        $item = $itemQuery->orderByDesc('id')->paginate(20);
-        $cate = categories::all();
-        $user = User::all();
-        return view('admin.items.list', compact('item', 'cate', 'user'),[
+        $item = items::getItems($request);
+        $category = categories::getCategories();
+        $user = User::getUser($request);
+
+        return view('admin.items.list', compact('item', 'category', 'user'),[
             'title' => 'danh sách Items'
         ]);
     }
@@ -35,10 +35,11 @@ class ItemController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
-        $user = User::all();
-        $category = categories::all();
+        $category = categories::getCategories();
+        $user = User::getUser($request);
+        
         return view('admin.Items.add',[
             'title' => 'Add item',
             'user' => $user,
@@ -55,12 +56,7 @@ class ItemController extends Controller
     public function store(AddRequest $request)
     {
         try {
-            items::create([
-                'name' => (string) $request->input('name'),
-                'quantity' => (int) $request->input('quantity'),
-                'user_id' => (int) $request->input('user_id'),
-                'category_id' => (int) $request->input('category_id'),
-            ]);
+            items::addItem($request);
             Session::flash('success', 'created successfully');
         } catch (\Exception $err) {
             Session::flash('error', $err->getMessage());
@@ -76,9 +72,10 @@ class ItemController extends Controller
      */
     public function show($id)
     {
-        $item = items::find($id);
-        $user = User::all();
-        $category = categories::all();
+        $item = items::findById($id);
+        $user = User::getUser();
+        $category = categories::getCategories();
+
         return view('admin.Items.edit',[
             'title' => 'Chỉnh sửa Items' . $item->name,
             'item' => $item,
@@ -97,8 +94,7 @@ class ItemController extends Controller
     public function update(AddRequest $request, $id)
     {
         try {
-            $item = items::find($id);
-            $item->fill($request->input());
+            $item = items::updateItem($request,$id);
             $item->save();
             Session::flash('success', 'update successfully');
         } catch (\Exception $err) {
@@ -115,13 +111,14 @@ class ItemController extends Controller
      */
     public function destroy($id)
     {
-        $item = items::find($id);
+        $item = items::findByID($id);
         $user_id = $item->user_id;
-        $user = User::find($user_id);
+        $user = User::findByID($user_id);
         SandMail::dispatch($user->email)->delay(now()->addSeconds(5));
         $item->delete();
         $item->save();
         Session::flash('success', 'deleted successfully');
+
         return redirect('admin/item/list');
     }
 }

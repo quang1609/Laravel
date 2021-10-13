@@ -40,6 +40,7 @@ class LoginController extends Controller
             return redirect('admin/main');
         }
         $request->session()->flash('error', 'incorrect email or password');
+        
         return redirect()->back();
     }
 }
